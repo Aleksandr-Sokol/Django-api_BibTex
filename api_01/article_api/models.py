@@ -5,6 +5,7 @@ from django.db.models import CharField, EmailField, TextField, IntegerField, Pos
 
 from .validatos import validateRussianSymbols
 
+
 class Author(Model):
     name = CharField(max_length=120, null=False,)
     country = CharField(max_length=120, null=True,)
@@ -33,15 +34,15 @@ class Journal(Model):
 
 
 class Article(Model):
-    title = CharField(max_length=120)
+    title = CharField(max_length=120, null=False)
     description = TextField()
     authors = ManyToManyField('Author')
     journal = ForeignKey('Journal', related_name='journal', on_delete=CASCADE)
-    year = DateField()  # datetime.date(1997, 10, 19)
-    number = PositiveSmallIntegerField()
-    volume = PositiveSmallIntegerField()
+    year = DateField(verbose_name=('year'), auto_now=True)  # datetime.date(1997, 10, 19)
+    number = PositiveSmallIntegerField(null=True)
+    volume = PositiveSmallIntegerField(null=True)
     pages = CharField(max_length=20)
-    doi = CharField(max_length=50, validators=[validateRussianSymbols])
+    doi = CharField(max_length=50, validators=[validateRussianSymbols], null=True)
 
     def __str__(self):
         return f'{self.title} ({self.year})'
