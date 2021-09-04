@@ -1,8 +1,9 @@
 # from django.db import models
 from django.db.models import Model, ForeignKey, ManyToManyField
 from django.db.models import CASCADE
-from django.db.models import CharField, EmailField, TextField, IntegerField, PositiveSmallIntegerField
+from django.db.models import CharField, EmailField, TextField, IntegerField, PositiveSmallIntegerField, DateField
 
+from .validatos import validateRussianSymbols
 
 class Author(Model):
     name = CharField(max_length=120, null=False,)
@@ -36,10 +37,11 @@ class Article(Model):
     description = TextField()
     authors = ManyToManyField('Author')
     journal = ForeignKey('Journal', related_name='journal', on_delete=CASCADE)
-    year = PositiveSmallIntegerField()  # Посмотреть валидаторы!!!
+    year = DateField()  # datetime.date(1997, 10, 19)
     number = PositiveSmallIntegerField()
     volume = PositiveSmallIntegerField()
     pages = CharField(max_length=20)
+    doi = CharField(max_length=50, validators=[validateRussianSymbols])
 
     def __str__(self):
         return f'{self.title} ({self.year})'
