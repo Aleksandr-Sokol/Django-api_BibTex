@@ -1,7 +1,7 @@
 # from django.db import models
 from django.db.models import Model, ForeignKey, ManyToManyField
-from django.db.models import CASCADE
-from django.db.models import CharField, EmailField, TextField, IntegerField, PositiveSmallIntegerField, DateField
+from django.db.models import CASCADE, BooleanField
+from django.db.models import CharField, EmailField, TextField, PositiveSmallIntegerField, DateField
 
 from .validatos import validateRussianSymbols
 
@@ -43,6 +43,7 @@ class Article(Model):
     volume = PositiveSmallIntegerField(null=True)
     pages = CharField(max_length=20)
     doi = CharField(max_length=50, validators=[validateRussianSymbols], null=True)
+    has_file = BooleanField(default=False)
 
     def __str__(self):
         return f'{self.title} ({self.year})'
