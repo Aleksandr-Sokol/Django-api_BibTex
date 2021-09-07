@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ArticleView, SingleArticleView, AuthorView, SingleAuthorView, JournalView, SingleJournalView
+from .views import ArticleView, SingleArticleView, AuthorView, SingleAuthorView, JournalView, SingleJournalView, FileUploadView
 
 
 app_name = "article_api"
@@ -11,4 +11,5 @@ urlpatterns = [
     path('author/<int:pk>', SingleAuthorView.as_view()),
     path('journal/', JournalView.as_view()),
     path('journal/<int:pk>', SingleJournalView.as_view()),
+    path('upload/', FileUploadView.as_view())
 ]

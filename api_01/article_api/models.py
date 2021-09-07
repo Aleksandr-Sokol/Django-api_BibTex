@@ -43,7 +43,7 @@ class Article(Model):
     volume = PositiveSmallIntegerField(null=True)
     pages = CharField(max_length=20)
     doi = CharField(max_length=50, validators=[validateRussianSymbols], null=True)
-    has_file = BooleanField(default=False)
+    # has_file = BooleanField(default=False)
 
     def __str__(self):
         return f'{self.title} ({self.year})'
