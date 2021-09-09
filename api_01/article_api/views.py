@@ -1,13 +1,13 @@
-from django.shortcuts import render
+import json
 from rest_framework import filters, pagination
 from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView, get_object_or_404
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from .models import Article, Author, Journal
-from .serializer import ArticleSerializer, AuthorSerializer, JournalSerializer, FileUploadSerializer
+from .serializer import ArticleSerializer, AuthorSerializer, JournalSerializer
 from .permissions import MyPermissions
+
 
 class PageNumberSetPagination(pagination.PageNumberPagination):
     page_size = 2
@@ -15,15 +15,11 @@ class PageNumberSetPagination(pagination.PageNumberPagination):
     ordering = 'title'
 
 
-# ****
-class ArticleView(ListCreateAPIView):
-    search_fields = ['title']
-    filter_backends = (filters.SearchFilter,)
-    queryset = Article.objects.all()
-    serializer_class = ArticleSerializer
-    # pagination_class = PageNumberSetPagination
-    permission_classes = [MyPermissions]
-
+class ListListObjects(ListCreateAPIView):
+    '''
+    Переопределяет метод create класса ListCreateAPIView
+    для создания через Post запрос списка объектов
+    '''
     def create(self, request, *args, **kwargs):
         many = isinstance(request.data, list)
         serializer = self.get_serializer(data=request.data, many=many)
@@ -31,6 +27,16 @@ class ArticleView(ListCreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, headers=headers)
+
+
+# ****
+class ArticleView(ListListObjects):
+    search_fields = ['title']
+    filter_backends = (filters.SearchFilter,)
+    queryset = Article.objects.all()
+    serializer_class = ArticleSerializer
+    # pagination_class = PageNumberSetPagination
+    permission_classes = [MyPermissions]
 
 
 class SingleArticleView(RetrieveUpdateDestroyAPIView):
@@ -39,22 +45,13 @@ class SingleArticleView(RetrieveUpdateDestroyAPIView):
     permission_classes = [MyPermissions]
 
 
-
 # ***
-class AuthorView(ListCreateAPIView):
+class AuthorView(ListListObjects):
     search_fields = ['name']
     filter_backends = (filters.SearchFilter,)
     queryset = Author.objects.all()
     serializer_class = AuthorSerializer
     permission_classes = [MyPermissions]
-
-    def create(self, request, *args, **kwargs):
-        many = isinstance(request.data, list)
-        serializer = self.get_serializer(data=request.data, many=many)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, headers=headers)
 
 
 class SingleAuthorView(RetrieveUpdateDestroyAPIView):
@@ -64,21 +61,12 @@ class SingleAuthorView(RetrieveUpdateDestroyAPIView):
 
 
 # ***
-class JournalView(ListCreateAPIView):
+class JournalView(ListListObjects):
     search_fields = ['name']
     filter_backends = (filters.SearchFilter,)
     queryset = Journal.objects.all()
     serializer_class = JournalSerializer
     permission_classes = [MyPermissions]
-
-    def create(self, request, *args, **kwargs):
-        many = isinstance(request.data, list)
-        serializer = self.get_serializer(data=request.data, many=many)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, headers=headers)
-
 
 
 class SingleJournalView(RetrieveUpdateDestroyAPIView):
@@ -86,7 +74,20 @@ class SingleJournalView(RetrieveUpdateDestroyAPIView):
     serializer_class = JournalSerializer
     permission_classes = [MyPermissions]
 
+
 # ***
+class FileUploadView(ListCreateAPIView):
+    """
+    A view that can accept POST requests with JSON content.
+    """
+    # parser_classes = (MultiPartParser,)
+    def post(self, request, format=None):
+        data = request.FILES['file'].read().decode("utf-8") #Файл предварительно нужно закодировать в utf-8
+        serializer = AuthorSerializer(data=json.loads(data), many=True)  # десериализация из json в объект article
+        if serializer.is_valid(raise_exception=True):
+            article_saved = serializer.save()    # сохранение в базу данных
+        return Response(json.loads(data))
+
 # class FileUploadView(APIView):
 #     parser_classes = (FileUploadParser,)
 #
@@ -113,22 +114,3 @@ class SingleJournalView(RetrieveUpdateDestroyAPIView):
 #        file = request.FILES['file']
 #        print(file)
 #        return Response(status=204)
-
-class FileUploadView(APIView):
-    """
-    A view that can accept POST requests with JSON content.
-    """
-    parser_classes = (MultiPartParser,)
-    def post(self, request, format=None):
-        # to access files
-        print(request.FILES)
-        # to access data
-        print(request.data)
-        return Response({'received data': request.data})
-
-    # def post(self, request):
-    #     article = request.data.get('article')
-    #     serializer = ArticleSerializer(data=article) # десериализация из json в объект article
-    #     if serializer.is_valid(raise_exception=True):
-    #         article_saved = serializer.save()    # сохранение в базу данных
-    #     return Response({текст})
