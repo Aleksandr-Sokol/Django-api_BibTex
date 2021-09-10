@@ -34,6 +34,8 @@ class Journal(Model):
 
 
 class Article(Model):
+    language = CharField(max_length=20, null=True)
+    bibTexId = CharField(max_length=30, null=True)
     title = CharField(max_length=120, null=False)
     description = TextField()
     authors = ManyToManyField('Author')
