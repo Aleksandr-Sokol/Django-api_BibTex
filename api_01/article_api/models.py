@@ -6,11 +6,14 @@ from django.db.models import CharField, EmailField, TextField, PositiveSmallInte
 from .validatos import validateRussianSymbols
 
 
+class PfdfFile(Model):
+    name = CharField(max_length=120, null=True)
+
 class Author(Model):
-    name = CharField(max_length=120, null=False,)
+    name = CharField(max_length=120, null=False, unique=True)
     country = CharField(max_length=120, null=True,)
     position = CharField(max_length=250, null=True,)
-    email = EmailField(null=True)
+    email = EmailField(null=True, unique=True)
 
     def __str__(self):
         return self.name
@@ -23,7 +26,7 @@ class Journal(Model):
         ('SCOPUS', 'SCOPUS'),
         ('WOS', 'WOS'),
     ]
-    name = CharField(max_length=120, null=False,)
+    name = CharField(max_length=120, null=False, unique=True)
     country = CharField(max_length=120, null=True,)
     grade = CharField(max_length=6,
                       choices=JOURNAL_GRADE_CHOICES,
@@ -35,17 +38,20 @@ class Journal(Model):
 
 class Article(Model):
     language = CharField(max_length=20, null=True)
-    bibTexId = CharField(max_length=30, null=True)
+    bibTexId = CharField(max_length=30, null=True, unique=True)
     title = CharField(max_length=120, null=False)
-    description = TextField()
+    description = TextField(null=True)
     authors = ManyToManyField('Author')
     journal = ForeignKey('Journal', related_name='journal', on_delete=CASCADE)
-    year = DateField(verbose_name=('year'), auto_now=True)  # datetime.date(1997, 10, 19)
+    file = ForeignKey('PfdfFile', related_name='file', on_delete=CASCADE)  # заготовка для хранения файла
+    year = DateField()  # datetime.date(1997, 10, 19)
     number = PositiveSmallIntegerField(null=True)
     volume = PositiveSmallIntegerField(null=True)
-    pages = CharField(max_length=20)
-    doi = CharField(max_length=50, validators=[validateRussianSymbols], null=True)
-    # has_file = BooleanField(default=False)
+    pages = CharField(max_length=20, null=True)
+    doi = CharField(max_length=50, validators=[validateRussianSymbols], null=True, unique=True)
+
+    class Meta:
+        unique_together = 'title', 'journal'
 
     def __str__(self):
         return f'{self.title} ({self.year})'
