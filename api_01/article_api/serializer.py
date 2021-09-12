@@ -23,33 +23,25 @@ class ArticleSerializer(serializers.ModelSerializer):
         fields = ('id', 'title', 'authors', 'description', 'year', 'journal', 'number', 'volume', 'pages', 'doi')
 
     def create(self, validated_data):
-        journal = validated_data['journal']
-        journal_name = journal['name']
-        journal_filter = Journal.objects.filter(name=journal_name).first()
+        validated_data_copy = validated_data.copy()
+        journal = validated_data_copy.pop('journal')
+        journal_filter = Journal.objects.filter(name=journal['name']).first()
         if not journal_filter:
-            data_journal = {
-                'name': journal_name,
-            }
-            journal_filter = Journal.objects.create(**data_journal)
+            journal_filter = Journal.objects.create(**journal)
 
-        authors = validated_data['authors']
+        authors = validated_data_copy.pop('authors')
         authors_list = []
         for author in authors:
             author_name = author['name']
             author_filter = Author.objects.filter(name=author_name).first()
             if not author_filter:
-                data_author = {
-                    'name': author_name,
-                }
-                author_filter = Author.objects.create(**data_author)
+                author_filter = Author.objects.create(**author)
             authors_list.append(author_filter)
-        data = {
-            'title': validated_data['title'],
-            'description': validated_data['description'],
-            'journal': journal_filter,
-        }
-        article = Article.objects.create(**data)
+
+        validated_data_copy['journal'] = journal_filter
+        article = Article.objects.create(**validated_data_copy)
         article.authors.set(authors_list)  # many-to-many можно добавлять только к уже существущим (НЕ при создании)
+        article.file = None
         article.save()
         return article
 
@@ -58,7 +50,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         return instance
 
 
-class FileUploadSerializer(serializers.Serializer):
-    # I set use_url to False so I don't need to pass file
-    # through the url itself - defaults to True if you need it
-    file = serializers.FileField(use_url=False)
+# class FileUploadSerializer(serializers.Serializer):
+#     # I set use_url to False so I don't need to pass file
+#     # through the url itself - defaults to True if you need it
+#     file = serializers.FileField(use_url=False)

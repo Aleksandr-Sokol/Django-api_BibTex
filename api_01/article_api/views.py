@@ -1,4 +1,8 @@
 import json
+from datetime import date
+
+import bibtexparser
+
 from rest_framework import filters, pagination
 from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView, get_object_or_404
 from rest_framework.parsers import FileUploadParser, MultiPartParser
@@ -13,6 +17,18 @@ class PageNumberSetPagination(pagination.PageNumberPagination):
     page_size = 2
     page_size_query_param = 'page_size'
     ordering = 'title'
+
+
+def refactorArticleBibTex(s_ini):
+    s_new = s_ini.copy()
+    del(s_new['ENTRYTYPE'])
+    s_new['bibTexId'] = s_new.pop('ID')
+    journal = {'name': s_new.pop('journal')}
+    authors = [{'name': s.strip().replace('. ', '.').replace(',', '')} for s in s_new.pop('author').split('and')]
+    s_new['authors'] = authors
+    s_new['journal'] = journal
+    s_new['year'] = date(int(s_new.pop('year')), 1, 1).strftime("%d-%m-%Y")
+    return s_new
 
 
 class ListListObjects(ListCreateAPIView):
@@ -51,13 +67,13 @@ class AuthorView(ListListObjects):
     filter_backends = (filters.SearchFilter,)
     queryset = Author.objects.all()
     serializer_class = AuthorSerializer
-    permission_classes = [MyPermissions]
+    # permission_classes = [MyPermissions]
 
 
 class SingleAuthorView(RetrieveUpdateDestroyAPIView):
     queryset = Author.objects.all()
     serializer_class = AuthorSerializer
-    permission_classes = [MyPermissions]
+    # permission_classes = [MyPermissions]
 
 
 # ***
@@ -66,13 +82,13 @@ class JournalView(ListListObjects):
     filter_backends = (filters.SearchFilter,)
     queryset = Journal.objects.all()
     serializer_class = JournalSerializer
-    permission_classes = [MyPermissions]
+    # permission_classes = [MyPermissions]
 
 
 class SingleJournalView(RetrieveUpdateDestroyAPIView):
     queryset = Journal.objects.all()
     serializer_class = JournalSerializer
-    permission_classes = [MyPermissions]
+    # permission_classes = [MyPermissions]
 
 
 # ***
@@ -83,10 +99,14 @@ class FileUploadView(ListCreateAPIView):
     # parser_classes = (MultiPartParser,)
     def post(self, request, format=None):
         data = request.FILES['file'].read().decode("utf-8") #Файл предварительно нужно закодировать в utf-8
-        serializer = AuthorSerializer(data=json.loads(data), many=True)  # десериализация из json в объект article
+        bib_database = bibtexparser.loads(data)
+        dataArticles = []
+        for oneArticle in bib_database.entries:
+            dataArticles.append(refactorArticleBibTex(oneArticle))
+        serializer = ArticleSerializer(data=dataArticles, many=True)  # десериализация из json в объект article
         if serializer.is_valid(raise_exception=True):
             article_saved = serializer.save()    # сохранение в базу данных
-        return Response(json.loads(data))
+        return Response('Ok')
 
 # class FileUploadView(APIView):
 #     parser_classes = (FileUploadParser,)

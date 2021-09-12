@@ -10,7 +10,7 @@ class PfdfFile(Model):
     name = CharField(max_length=120, null=True)
 
 class Author(Model):
-    name = CharField(max_length=120, null=False, unique=True)
+    name = CharField(max_length=120, null=False)
     country = CharField(max_length=120, null=True,)
     position = CharField(max_length=250, null=True,)
     email = EmailField(null=True, unique=True)
@@ -26,7 +26,7 @@ class Journal(Model):
         ('SCOPUS', 'SCOPUS'),
         ('WOS', 'WOS'),
     ]
-    name = CharField(max_length=120, null=False, unique=True)
+    name = CharField(max_length=120, null=False)
     country = CharField(max_length=120, null=True,)
     grade = CharField(max_length=6,
                       choices=JOURNAL_GRADE_CHOICES,
@@ -43,7 +43,7 @@ class Article(Model):
     description = TextField(null=True)
     authors = ManyToManyField('Author')
     journal = ForeignKey('Journal', related_name='journal', on_delete=CASCADE)
-    file = ForeignKey('PfdfFile', related_name='file', on_delete=CASCADE)  # заготовка для хранения файла
+    file = ForeignKey('PfdfFile', related_name='file', on_delete=CASCADE, null=True, blank=True)  # заготовка для хранения файла
     year = DateField()  # datetime.date(1997, 10, 19)
     number = PositiveSmallIntegerField(null=True)
     volume = PositiveSmallIntegerField(null=True)
