@@ -130,7 +130,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    "DATE_INPUT_FORMATS": ["%d-%m-%Y"],
 }
+
 SIMPLE_JWT = {  # Время жизни ключа
     "ACCESS_TOKEN_LIFETIME": timedelta(days=10),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=20),
