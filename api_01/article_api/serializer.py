@@ -25,19 +25,9 @@ class ArticleSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data_copy = validated_data.copy()
         journal = validated_data_copy.pop('journal')
-        journal_filter = Journal.objects.filter(name=journal['name']).first()
-        if not journal_filter:
-            journal_filter = Journal.objects.create(**journal)
-
+        journal_filter = Journal.objects.get_or_create(name=journal['name'])
         authors = validated_data_copy.pop('authors')
-        authors_list = []
-        for author in authors:
-            author_name = author['name']
-            author_filter = Author.objects.filter(name=author_name).first()
-            if not author_filter:
-                author_filter = Author.objects.create(**author)
-            authors_list.append(author_filter)
-
+        authors_list = [Author.objects.get_or_create(name=author['name']) for author in authors]
         validated_data_copy['journal'] = journal_filter
         article = Article.objects.create(**validated_data_copy)
         article.authors.set(authors_list)  # many-to-many можно добавлять только к уже существущим (НЕ при создании)
@@ -46,7 +36,6 @@ class ArticleSerializer(serializers.ModelSerializer):
         return article
 
     def update(self, instance, validated_data):
-        print('start update')
         return instance
 
 
